@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XGBoost Heart Disease Prediction</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1">
+                <i class="fas fa-heart"></i> Heart Disease Prediction
+            </span>
+            <span class="text-light">XGBoost ML Model</span>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container mt-5 mb-5">
+        <div class="row">
+            <!-- Left Column - Form -->
+            <div class="col-lg-7">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="fas fa-stethoscope"></i> Input Data Pasien</h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Alert untuk disclaimer -->
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Disclaimer:</strong> Aplikasi ini hanya untuk tujuan edukasi dan bukan merupakan pengganti dari diagnosa profesional dokter. Selalu konsultasikan dengan tenaga medis profesional.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+
+                        <!-- Form -->
+                        <form id="predictionForm" method="POST">
+                            <!-- Row 1 -->
+                            <div class="row">
+                                <!-- Age -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="age" class="form-label">
+                                        <strong>Usia (tahun)</strong>
+                                        <span class="badge bg-info ms-2">1-120</span>
+                                    </label>
+                                    <input type="number" class="form-control" id="age" name="age" 
+                                           min="1" max="120" step="1" placeholder="Contoh: 55" required>
+                                    <small class="form-text text-muted">Usia pasien dalam tahun</small>
+                                </div>
+
+                                <!-- Sex -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="sex" class="form-label">
+                                        <strong>Jenis Kelamin</strong>
+                                        <span class="badge bg-info ms-2">0 atau 1</span>
+                                    </label>
+                                    <select class="form-select" id="sex" name="sex" required>
+                                        <option value="">-- Pilih --</option>
+                                        <option value="0">Wanita (0)</option>
+                                        <option value="1">Pria (1)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Row 2 -->
+                            <div class="row">
+                                <!-- Chest Pain Type -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="cp" class="form-label">
+                                        <strong>Tipe Nyeri Dada</strong>
+                                        <span class="badge bg-info ms-2">0-3</span>
+                                    </label>
+                                    <select class="form-select" id="cp" name="cp" required>
+                                        <option value="">-- Pilih --</option>
+                                        <option value="0">Typical Angina (0)</option>
+                                        <option value="1">Atypical Angina (1)</option>
+                                        <option value="2">Non-anginal Pain (2)</option>
+                                        <option value="3">Asymptomatic (3)</option>
+                                    </select>
+                                </div>
+
+                                <!-- Resting Blood Pressure -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="trestbps" class="form-label">
+                                        <strong>Tekanan Darah Istirahat (mmHg)</strong>
+                                        <span class="badge bg-info ms-2">50-250</span>
+                                    </label>
+                                    <input type="number" class="form-control" id="trestbps" name="trestbps"
+                                           min="50" max="250" step="1" placeholder="Contoh: 140" required>
+                                </div>
+                            </div>
+
+                            <!-- Row 3 -->
+                            <div class="row">
+                                <!-- Serum Cholesterol -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="chol" class="form-label">
+                                        <strong>Kolesterol Serum (mg/dl)</strong>
+                                        <span class="badge bg-info ms-2">100-600</span>
+                                    </label>
+                                    <input type="number" class="form-control" id="chol" name="chol"
+                                           min="100" max="600" step="1" placeholder="Contoh: 250" required>
+                                </div>
+
+                                <!-- Fasting Blood Sugar -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="fbs" class="form-label">
+                                        <strong>Gula Darah Puasa > 120</strong>
+                                        <span class="badge bg-info ms-2">0 atau 1</span>
+                                    </label>
+                                    <select class="form-select" id="fbs" name="fbs" required>
+                                        <option value="">-- Pilih --</option>
+                                        <option value="0">Tidak (0)</option>
+                                        <option value="1">Ya (1)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Row 4 -->
+                            <div class="row">
+                                <!-- Resting ECG -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="restecg" class="form-label">
+                                        <strong>Hasil EKG Istirahat</strong>
+                                        <span class="badge bg-info ms-2">0-2</span>
+                                    </label>
+                                    <select class="form-select" id="restecg" name="restecg" required>
+                                        <option value="">-- Pilih --</option>
+                                        <option value="0">Normal (0)</option>
+                                        <option value="1">ST-T Abnormality (1)</option>
+                                        <option value="2">LV Hypertrophy (2)</option>
+                                    </select>
+                                </div>
+
+                                <!-- Maximum Heart Rate -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="thalach" class="form-label">
+                                        <strong>Detak Jantung Maksimum</strong>
+                                        <span class="badge bg-info ms-2">40-250</span>
+                                    </label>
+                                    <input type="number" class="form-control" id="thalach" name="thalach"
+                                           min="40" max="250" step="1" placeholder="Contoh: 150" required>
+                                </div>
+                            </div>
+
+                            <!-- Row 5 -->
+                            <div class="row">
+                                <!-- Exercise Induced Angina -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="exang" class="form-label">
+                                        <strong>Angina akibat Olahraga</strong>
+                                        <span class="badge bg-info ms-2">0 atau 1</span>
+                                    </label>
+                                    <select class="form-select" id="exang" name="exang" required>
+                                        <option value="">-- Pilih --</option>
+                                        <option value="0">Tidak (0)</option>
+                                        <option value="1">Ya (1)</option>
+                                    </select>
+                                </div>
+
+                                <!-- ST Depression -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="oldpeak" class="form-label">
+                                        <strong>Depresi ST akibat Olahraga</strong>
+                                        <span class="badge bg-info ms-2">0-7</span>
+                                    </label>
+                                    <input type="number" class="form-control" id="oldpeak" name="oldpeak"
+                                           min="0" max="7" step="0.1" placeholder="Contoh: 2.5" required>
+                                </div>
+                            </div>
+
+                            <!-- Row 6 -->
+                            <div class="row">
+                                <!-- ST Segment Slope -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="slope" class="form-label">
+                                        <strong>Kemiringan Segmen ST</strong>
+                                        <span class="badge bg-info ms-2">0-2</span>
+                                    </label>
+                                    <select class="form-select" id="slope" name="slope" required>
+                                        <option value="">-- Pilih --</option>
+                                        <option value="0">Upsloping (0)</option>
+                                        <option value="1">Flat (1)</option>
+                                        <option value="2">Downsloping (2)</option>
+                                    </select>
+                                </div>
+
+                                <!-- Number of Major Vessels -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="ca" class="form-label">
+                                        <strong>Jumlah Pembuluh Darah Besar</strong>
+                                        <span class="badge bg-info ms-2">0-4</span>
+                                    </label>
+                                    <select class="form-select" id="ca" name="ca" required>
+                                        <option value="">-- Pilih --</option>
+                                        <option value="0">0 pembuluh</option>
+                                        <option value="1">1 pembuluh</option>
+                                        <option value="2">2 pembuluh</option>
+                                        <option value="3">3 pembuluh</option>
+                                        <option value="4">4 pembuluh</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Row 7 -->
+                            <div class="row">
+                                <!-- Thalassemia -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="thal" class="form-label">
+                                        <strong>Thalassemia</strong>
+                                        <span class="badge bg-info ms-2">0-3</span>
+                                    </label>
+                                    <select class="form-select" id="thal" name="thal" required>
+                                        <option value="">-- Pilih --</option>
+                                        <option value="0">Normal (0)</option>
+                                        <option value="1">Fixed Defect (1)</option>
+                                        <option value="2">Reversable Defect (2)</option>
+                                        <option value="3">Other (3)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                    <i class="fas fa-heartbeat"></i> Prediksi Sekarang
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Info & Result -->
+            <div class="col-lg-5">
+                <!-- Info Card -->
+                <div class="card shadow-lg mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-info-circle"></i> Informasi Aplikasi</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Model:</strong> XGBoost Classifier</p>
+                        <p><strong>Dataset:</strong> Heart Disease (UCI Machine Learning)</p>
+                        <p><strong>Total Fitur:</strong> 13 fitur medis</p>
+                        <p><strong>Akurasi:</strong> ~85-90% (hasil pelatihan)</p>
+                        <p class="mb-0"><strong>Tujuan:</strong> Prediksi risiko penyakit jantung berdasarkan data medis pasien</p>
+                    </div>
+                </div>
+
+                <!-- Result Card (Hidden by default) -->
+                <div id="resultCard" class="card shadow-lg" style="display: none;">
+                    <div class="card-header" id="resultHeader">
+                        <h5 class="mb-0"><i class="fas fa-clipboard-check"></i> Hasil Prediksi</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Risk Level Badge -->
+                        <div class="text-center mb-4">
+                            <span id="riskBadge" class="badge badge-lg"></span>
+                        </div>
+
+                        <!-- Risk Interpretation -->
+                        <p id="interpretation" class="lead text-center"></p>
+
+                        <!-- Probability Info -->
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <h6>Risiko Penyakit</h6>
+                                <p id="probabilityDisease" class="h4 text-danger mb-0">--</p>
+                            </div>
+                            <div class="col-6">
+                                <h6>Tidak Ada Risiko</h6>
+                                <p id="probabilityNoDisease" class="h4 text-success mb-0">--</p>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="mt-4">
+                            <label class="form-label">Tingkat Kepercayaan:</label>
+                            <div class="progress" style="height: 25px;">
+                                <div id="confidenceBar" class="progress-bar" role="progressbar" 
+                                     style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <small id="confidenceText" class="form-text text-muted">--</small>
+                        </div>
+
+                        <!-- Timestamp -->
+                        <p id="timestamp" class="text-muted mt-3 mb-0">
+                            <i class="fas fa-clock"></i> <small id="predictionTime">--</small>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Error Alert (Hidden by default) -->
+                <div id="errorAlert" class="alert alert-danger alert-dismissible fade show" role="alert" style="display: none;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <strong>Error!</strong>
+                    <p id="errorMessage" class="mb-0"></p>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+
+                <!-- Loading Spinner (Hidden by default) -->
+                <div id="loadingSpinner" class="card" style="display: none;">
+                    <div class="card-body text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-3">Sedang melakukan prediksi...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light text-center py-4 mt-5">
+        <div class="container">
+            <p class="text-muted mb-0">
+                <small>Tugas Akhir 14 - Praktikum Machine Learning | XGBoost Heart Disease Prediction | 2026</small>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Form submission handler
+        document.getElementById('predictionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Hide previous results and show loading
+            document.getElementById('resultCard').style.display = 'none';
+            document.getElementById('errorAlert').style.display = 'none';
+            document.getElementById('loadingSpinner').style.display = 'block';
+
+            try {
+                // Get form data
+                const formData = new FormData(document.getElementById('predictionForm'));
+                
+                // Send POST request
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                // Hide loading spinner
+                document.getElementById('loadingSpinner').style.display = 'none';
+
+                if (data.success) {
+                    // Display result
+                    const interp = data.interpretation;
+                    
+                    // Update result card header color
+                    const resultHeader = document.getElementById('resultHeader');
+                    resultHeader.className = `card-header bg-${interp.color} text-white`;
+
+                    // Update content
+                    document.getElementById('riskBadge').className = `badge bg-${interp.color} p-3`;
+                    document.getElementById('riskBadge').innerHTML = `<h4 class="mb-0">${interp.risk_level}</h4>`;
+                    document.getElementById('interpretation').textContent = interp.interpretation;
+                    document.getElementById('probabilityDisease').textContent = interp.probability_disease;
+                    document.getElementById('probabilityNoDisease').textContent = interp.probability_no_disease;
+                    
+                    // Update confidence bar
+                    const confidencePercent = parseFloat(interp.confidence);
+                    document.getElementById('confidenceBar').style.width = confidencePercent + '%';
+                    document.getElementById('confidenceBar').textContent = interp.confidence;
+                    document.getElementById('confidenceText').textContent = `Tingkat kepercayaan prediksi: ${interp.confidence}`;
+                    
+                    // Update timestamp
+                    const date = new Date(data.timestamp);
+                    document.getElementById('predictionTime').textContent = date.toLocaleString('id-ID');
+
+                    // Show result card
+                    document.getElementById('resultCard').style.display = 'block';
+
+                    // Scroll to result
+                    document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+
+                } else {
+                    // Show error
+                    document.getElementById('errorMessage').textContent = data.error;
+                    document.getElementById('errorAlert').style.display = 'block';
+                }
+
+            } catch (error) {
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('errorMessage').textContent = `Error: ${error.message}`;
+                document.getElementById('errorAlert').style.display = 'block';
+            }
+        });
+
+        // Form validation
+        const inputs = document.querySelectorAll('input[type="number"]');
+        inputs.forEach(input => {
+            input.addEventListener('change', () => {
+                const min = parseFloat(input.min);
+                const max = parseFloat(input.max);
+                const value = parseFloat(input.value);
+                
+                if (value < min || value > max) {
+                    input.classList.add('is-invalid');
+                } else {
+                    input.classList.remove('is-invalid');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
